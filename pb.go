@@ -91,8 +91,9 @@ type ProgressBar struct {
 	finish     chan struct{}
 	isFinish   bool
 
-	startTime  time.Time
-	startValue int64
+	startTime   time.Time
+	elapsedTime time.Duration
+	startValue  int64
 
 	changeTime time.Time
 
@@ -124,6 +125,14 @@ func (pb *ProgressBar) Start() *ProgressBar {
 		go pb.refresher()
 	}
 	return pb
+}
+
+func (pb *ProgressBar) StartTime() time.Time {
+	return pb.startTime
+}
+
+func (pb *ProgressBar) ElapsedTime() time.Duration {
+	return pb.elapsedTime
 }
 
 // Increment current value
@@ -282,7 +291,6 @@ func (pb *ProgressBar) NewProxyWriter(r io.Writer) *Writer {
 	return &Writer{r, pb}
 }
 
-
 func (pb *ProgressBar) write(total, current int64) {
 	pb.mu.Lock()
 	defer pb.mu.Unlock()
@@ -314,19 +322,19 @@ func (pb *ProgressBar) write(total, current int64) {
 
 	// time left
 	currentFromStart := current - pb.startValue
-	fromStart := time.Now().Sub(pb.startTime)
+	pb.elapsedTime = time.Now().Sub(pb.startTime)
 	lastChangeTime := pb.changeTime
 	fromChange := lastChangeTime.Sub(pb.startTime)
 
 	if pb.ShowElapsedTime {
-		timeSpentBox = fmt.Sprintf(" %s ", (fromStart/time.Second)*time.Second)
+		timeSpentBox = fmt.Sprintf(" %s ", (pb.elapsedTime/time.Second)*time.Second)
 	}
 
 	select {
 	case <-pb.finish:
 		if pb.ShowFinalTime {
 			var left time.Duration
-			left = (fromStart / time.Second) * time.Second
+			left = (pb.elapsedTime / time.Second) * time.Second
 			timeLeftBox = fmt.Sprintf(" %s", left.String())
 		}
 	default:
