@@ -513,3 +513,21 @@ func (pb *ProgressBar) refresher() {
 		}
 	}
 }
+
+type ProgressResult struct {
+	Finish      bool
+	TotalSize   int64
+	CurrentSize int64
+	StartTime   time.Time
+	ElapsedTime time.Duration
+}
+
+func (pb *ProgressBar) Result() *ProgressResult {
+	return &ProgressResult{
+		Finish:      pb.isFinish,
+		TotalSize:   pb.Total,
+		CurrentSize: pb.current,
+		StartTime:   pb.startTime,
+		ElapsedTime: pb.elapsedTime,
+	}
+}
